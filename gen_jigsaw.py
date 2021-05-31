@@ -134,44 +134,43 @@ def generate_jigsaw(index: int, missing: List[int]):
             if missing is not None and tile_id in missing:
                 pixel = (0, 0, 0)
             else:
+                base = [0, 0, 0]
+                # Main tiles
+                base[0] = (source_px[0] * mask_a)
+                base[1] = (source_px[1] * mask_a)
+                base[2] = (source_px[2] * mask_a)
+
+                # Left neighbour tiles
                 if x < MARGIN_SIZE:
                     l_source_px = l_source[in_coords(x_in + TARGET_SIZE, y_in)]
                     l_mask_a = l_mask[in_coords(x_in + TARGET_SIZE, y_in)][0] / 256
-                    base = (
-                        int((source_px[0] * mask_a) + (l_source_px[0] * l_mask_a)),
-                        int((source_px[1] * mask_a) + (l_source_px[1] * l_mask_a)),
-                        int((source_px[2] * mask_a) + (l_source_px[2] * l_mask_a))
-                    )
-                elif x > TARGET_SIZE - MARGIN_SIZE:
+                    base[0] = base[0] + (l_source_px[0] * l_mask_a)
+                    base[1] = base[1] + (l_source_px[1] * l_mask_a)
+                    base[2] = base[2] + (l_source_px[2] * l_mask_a)
+
+                # Right neighbour tiles
+                if x > TARGET_SIZE - MARGIN_SIZE:
                     r_source_px = r_source[in_coords(x_in - TARGET_SIZE, y_in)]
                     r_mask_a = r_mask[in_coords(x_in - TARGET_SIZE, y_in)][0] / 256
-                    base = (
-                        int((source_px[0] * mask_a) + (r_source_px[0] * r_mask_a)),
-                        int((source_px[1] * mask_a) + (r_source_px[1] * r_mask_a)),
-                        int((source_px[2] * mask_a) + (r_source_px[2] * r_mask_a))
-                    )
-                elif y < MARGIN_SIZE:
+                    base[0] = base[0] + (r_source_px[0] * r_mask_a)
+                    base[1] = base[1] + (r_source_px[1] * r_mask_a)
+                    base[2] = base[2] + (r_source_px[2] * r_mask_a)
+
+                # Top neighbour tiles
+                if y < MARGIN_SIZE:
                     t_source_px = t_source[in_coords(x_in, y_in + TARGET_SIZE)]
                     t_mask_a = t_mask[in_coords(x_in, y_in + TARGET_SIZE)][0] / 256
-                    base = (
-                        int((source_px[0] * mask_a) + (t_source_px[0] * t_mask_a)),
-                        int((source_px[1] * mask_a) + (t_source_px[1] * t_mask_a)),
-                        int((source_px[2] * mask_a) + (t_source_px[2] * t_mask_a))
-                    )
-                elif y > TARGET_SIZE - MARGIN_SIZE:
+                    base[0] = base[0] + (t_source_px[0] * t_mask_a)
+                    base[1] = base[1] + (t_source_px[1] * t_mask_a)
+                    base[2] = base[2] + (t_source_px[2] * t_mask_a)
+
+                # Bottom neighbour tiles
+                if y > TARGET_SIZE - MARGIN_SIZE:
                     b_source_px = b_source[in_coords(x_in, y_in - TARGET_SIZE)]
                     b_mask_a = b_mask[in_coords(x_in, y_in - TARGET_SIZE)][0] / 256
-                    base = (
-                        int((source_px[0] * mask_a) + (b_source_px[0] * b_mask_a)),
-                        int((source_px[1] * mask_a) + (b_source_px[1] * b_mask_a)),
-                        int((source_px[2] * mask_a) + (b_source_px[2] * b_mask_a))
-                    )
-                else:
-                    base = (
-                        int(source_px[0] * mask_a),
-                        int(source_px[1] * mask_a),
-                        int(source_px[2] * mask_a)
-                    )
+                    base[0] = base[0] + (b_source_px[0] * b_mask_a)
+                    base[1] = base[1] + (b_source_px[1] * b_mask_a)
+                    base[2] = base[2] + (b_source_px[2] * b_mask_a)
 
                 if bump_a > 0.5:
                     factor = 1 - (2 * (bump_a - 0.5))
@@ -205,7 +204,6 @@ def generate_jigsaw(index: int, missing: List[int]):
     output_path = "output/" + str(index) + ".png"
     output.save(output_path)
     print(" ✔ Generated file " + output_path)
-
 
 def generate_list(path: str):
     with open(path) as json_file:
