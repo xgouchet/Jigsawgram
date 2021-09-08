@@ -11,6 +11,18 @@ from typing import List
 
 from PIL import Image
 
+PLACEHOLDER = [
+    (255, 0, 0),
+    (0, 128, 255),
+    (255, 128, 0),
+    (0, 0, 255),
+    (128, 255, 0),
+    (128, 0, 255),
+    (0, 255, 0),
+    (255, 0, 128),
+    (0, 255, 128)
+]
+
 TEMPLATES = ["a", "b", "c", "d", "e", "f", "g"]
 ROW_COUNT = 3
 
@@ -51,7 +63,7 @@ def get_source_image(index: int) -> Image:
         return Image.open(fp, mode='r')
     else:
         print(" ⚠ File " + fp + " does not exist")
-        return Image.new("RGB", (INPUT_WIDTH, INPUT_HEIGHT), (0, 0, 0))
+        return Image.new("RGB", (INPUT_WIDTH, INPUT_HEIGHT), PLACEHOLDER[index % 9])
 
 
 def get_post_image(index: int) -> Image:
@@ -60,7 +72,7 @@ def get_post_image(index: int) -> Image:
         return Image.open(fp, mode='r')
     else:
         print(" ⚠ File " + fp + " does not exist")
-        return Image.new("RGB", (TARGET_WIDTH_POST, TARGET_HEIGHT_POST), (0, 0, 0))
+        return Image.new("RGB", (TARGET_WIDTH_POST, TARGET_HEIGHT_POST), PLACEHOLDER[index % 9])
 
 
 def get_overlay_image(index: int) -> Image:
@@ -189,8 +201,8 @@ def generate_jigsaw(index: int, missing: List[int], with_overlay:bool, prefix: s
                 # Top neighbour tiles
                 if y < DOUBLE_OVERLAP - offset_y_in:
                     if x_in in range(0, INPUT_WIDTH):
-                        t_source_px = t_source[in_coords(x_in, y_in + INPUT_WIDTH - DOUBLE_OVERLAP)]
-                        t_mask_a = t_mask[in_coords(x_in, y_in + INPUT_WIDTH - DOUBLE_OVERLAP)][0] / 256
+                        t_source_px = t_source[in_coords(x_in, y_in + INPUT_HEIGHT - DOUBLE_OVERLAP)]
+                        t_mask_a = t_mask[in_coords(x_in, y_in + INPUT_HEIGHT - DOUBLE_OVERLAP)][0] / 256
                         base[0] = base[0] + (t_source_px[0] * t_mask_a)
                         base[1] = base[1] + (t_source_px[1] * t_mask_a)
                         base[2] = base[2] + (t_source_px[2] * t_mask_a)
@@ -198,8 +210,8 @@ def generate_jigsaw(index: int, missing: List[int], with_overlay:bool, prefix: s
                 # Bottom neighbour tiles
                 if y > target_height + offset_y_in - DOUBLE_OVERLAP:
                     if x_in in range(0, INPUT_WIDTH):
-                        b_source_px = b_source[in_coords(x_in, y_in - INPUT_WIDTH + DOUBLE_OVERLAP)]
-                        b_mask_a = b_mask[in_coords(x_in, y_in - INPUT_WIDTH + DOUBLE_OVERLAP)][0] / 256
+                        b_source_px = b_source[in_coords(x_in, y_in - INPUT_HEIGHT + DOUBLE_OVERLAP)]
+                        b_mask_a = b_mask[in_coords(x_in, y_in - INPUT_HEIGHT + DOUBLE_OVERLAP)][0] / 256
                         base[0] = base[0] + (b_source_px[0] * b_mask_a)
                         base[1] = base[1] + (b_source_px[1] * b_mask_a)
                         base[2] = base[2] + (b_source_px[2] * b_mask_a)
