@@ -128,7 +128,7 @@ def in_coords(x: int, y: int) -> int:
     return x + (y * INPUT_WIDTH)
 
 
-def generate_jigsaw(index: int, missing: List[int], with_overlay:bool, prefix: str):
+def generate_jigsaw(index: int, missing: List[int], with_overlay_prefix: str, without_overlay_prefix: str):
     print("Generating jigsaw picture for index " + str(index) + " with missing tiles " + repr(missing))
 
     target_width = TARGET_WIDTH_POST
@@ -140,8 +140,7 @@ def generate_jigsaw(index: int, missing: List[int], with_overlay:bool, prefix: s
     bump = get_bump_image(index).getdata()
     stroke = get_stroke_image(index).getdata()
     tileid = get_tileid_image(index).getdata()
-    if with_overlay:
-        overlay = get_overlay_image(index).getdata()
+    overlay = get_overlay_image(index).getdata()
 
     l_source = get_source_image(index + 1).getdata()
     l_mask = get_mask_image(index + 1).getdata()
@@ -161,8 +160,6 @@ def generate_jigsaw(index: int, missing: List[int], with_overlay:bool, prefix: s
             y_in = y + offset_y_in
             if x_in in range(0, INPUT_WIDTH) and y_in in range(0, INPUT_HEIGHT):
                 source_px = source[in_coords(x_in, y_in)]
-                if with_overlay:
-                    overlay_px = overlay[in_coords(x_in, y_in)]
                 tileid_px = tileid[in_coords(x_in, y_in)]
                 mask_a = mask[in_coords(x_in, y_in)][0] / 256
                 bump_a = bump[in_coords(x_in, y_in)][0] / 256
@@ -170,7 +167,7 @@ def generate_jigsaw(index: int, missing: List[int], with_overlay:bool, prefix: s
                 tile_id = int(tileid_px[0] * 16 / 85) + \
                           int(tileid_px[1] * 4 / 85) + \
                           int(tileid_px[2] / 85)
-            
+
             if missing is not None and tile_id in missing:
                 pixel = (0, 0, 0)
             else:
@@ -235,20 +232,30 @@ def generate_jigsaw(index: int, missing: List[int], with_overlay:bool, prefix: s
                 int((pixel[1] * 0.1) + (pixel[1] * 0.9 * stroke_a)),
                 int((pixel[2] * 0.1) + (pixel[2] * 0.9 * stroke_a))
             )
-            if with_overlay:
+            output_data[x, y] = (jigsaw[0], jigsaw[1], jigsaw[2])
+
+    if not os.path.exists('output'):
+        os.makedirs('output')
+    output_path = "output/" + without_overlay_prefix + "_" + str(index) + ".png"
+    output.save(output_path)
+    print(" ✔ Generated file " + output_path)
+
+    # Add overlay
+    for x in range(0, target_width):
+        for y in range(0, target_height):
+            x_in = x + offset_x_in
+            y_in = y + offset_y_in
+            if x_in in range(0, INPUT_WIDTH) and y_in in range(0, INPUT_HEIGHT):
+                overlay_px = overlay[in_coords(x_in, y_in)]
                 overlay_src = overlay_px[3] / 256
                 overlay_dst = 1 - overlay_src
+                jigsaw = output_data[x, y]
                 output_data[x, y] = (
                     int((jigsaw[0] * overlay_dst) + (overlay_px[0] * overlay_src)),
                     int((jigsaw[1] * overlay_dst) + (overlay_px[1] * overlay_src)),
                     int((jigsaw[2] * overlay_dst) + (overlay_px[2] * overlay_src))
                 )
-            else:
-                output_data[x, y] = (jigsaw[0], jigsaw[1], jigsaw[2])
-
-    if not os.path.exists('output'):
-        os.makedirs('output')
-    output_path = "output/" + prefix + "_" + str(index) + ".png"
+    output_path = "output/" + with_overlay_prefix + "_" + str(index) + ".png"
     output.save(output_path)
     print(" ✔ Generated file " + output_path)
 
@@ -271,7 +278,7 @@ def generate_story(index: int):
     post_bl = get_post_image(index - ROW_COUNT + 1).getdata()
     post_b = get_post_image(index - ROW_COUNT).getdata()
     post_br = get_post_image(index - ROW_COUNT - 1).getdata()
-            
+
     for x in range(0, target_width):
         for y in range(0, target_height):
             x_in = x + offset_x_in
@@ -324,8 +331,7 @@ def generate_list(path: str):
     for key in config:
         index = int(key)
         missing = config[key]
-        generate_jigsaw(index, missing, True, "post")
-        generate_jigsaw(index, missing, False, "raw")
+        generate_jigsaw(index, missing, "post", "raw")
 
     for key in config:
         index = int(key)
